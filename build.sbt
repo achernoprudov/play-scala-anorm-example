@@ -1,4 +1,4 @@
-name := "play-scala-anorm-example"
+name := "scala-play-rest-app"
 
 version := "0.0.1-SNAPSHOT"
 
