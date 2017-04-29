@@ -21,6 +21,7 @@ case class Page[A](items: Seq[A], page: Int, offset: Long, total: Long) {
   lazy val next = Option(page + 1).filter(_ => (offset + items.size) < total)
 }
 
+case class ListItem(computer: Computer, company: Option[Company])
 
 @javax.inject.Singleton
 class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
@@ -47,7 +48,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    * Parse a (Computer,Company) from a ResultSet
    */
   val withCompany = simple ~ (companyService.simple ?) map {
-    case computer~company => (computer,company)
+    case computer~company => ListItem(computer, company)
   }
 
   // -- Queries
@@ -69,7 +70,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    * @param orderBy Computer property used for sorting
    * @param filter Filter applied on the name column
    */
-  def list(page: Int = 0, pageSize: Int = 10, orderBy: Int = 1, filter: String = "%"): Page[(Computer, Option[Company])] = {
+  def list(page: Int = 0, pageSize: Int = 10, orderBy: Int = 1, filter: String = "%"): Page[ListItem] = {
 
     val offest = pageSize * page
 
@@ -101,9 +102,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
       ).as(scalar[Long].single)
 
       Page(computers, page, offest, totalRows)
-
     }
-
   }
 
   /**

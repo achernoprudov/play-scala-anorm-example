@@ -14,3 +14,6 @@ libraryDependencies += "com.adrianhurt" %% "play-bootstrap" % "1.0-P25-B3"
 libraryDependencies += "com.typesafe.play" %% "anorm" % "2.5.0"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
 
+libraryDependencies += "net.liftweb" % "lift-json_2.11" % "2.6-M4"
+
+

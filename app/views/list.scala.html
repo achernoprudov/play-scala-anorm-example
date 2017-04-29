@@ -1,4 +1,4 @@
-@(currentPage: Page[(Computer, Option[Company])], currentOrderBy: Int, currentFilter: String)(implicit flash: play.api.mvc.Flash, messages: Messages)
+@(currentPage: Page[ListItem], currentOrderBy: Int, currentFilter: String)(implicit flash: play.api.mvc.Flash, messages: Messages)
 
 @import helper._
 
@@ -57,21 +57,19 @@
             </thead>
             <tbody>
 
-                @computers.map { 
-                    case (computer, company) => {
-                        <tr>
-                            <td><a href="@routes.HomeController.edit(computer.id.get)">@computer.name</a></td>
-                            <td>
-                                @computer.introduced.map(_.format("dd MMM yyyy")).getOrElse { <em>-</em> }
-                            </td>
-                            <td>
-                                @computer.discontinued.map(_.format("dd MMM yyyy")).getOrElse { <em>-</em> }
-                            </td>
-                            <td>
-                                @company.map(_.name).getOrElse { <em>-</em> }
-                            </td>
-                        </tr>
-                    }
+                @computers.map { item =>
+                    <tr>
+                        <td><a href="@routes.HomeController.edit(item.computer.id.get)">@item.computer.name</a></td>
+                        <td>
+                            @item.computer.introduced.map(_.format("dd MMM yyyy")).getOrElse { <em>-</em> }
+                        </td>
+                        <td>
+                            @item.computer.discontinued.map(_.format("dd MMM yyyy")).getOrElse { <em>-</em> }
+                        </td>
+                        <td>
+                            @item.company.map(_.name).getOrElse { <em>-</em> }
+                        </td>
+                    </tr>
                 }
 
             </tbody>

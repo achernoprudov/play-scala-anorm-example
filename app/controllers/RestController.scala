@@ -9,10 +9,14 @@ import play.api.i18n._
 import play.api.mvc._
 import views._
 
+import net.liftweb.json._
+import net.liftweb.json.Serialization.write
+
+
 /**
   * Manage a database of computers
   */
-class HomeController @Inject()(computerService: ComputerService,
+class RestController @Inject()(computerService: ComputerService,
                                companyService: CompanyService,
                                val messagesApi: MessagesApi)
   extends Controller with I18nSupport {
@@ -53,10 +57,10 @@ class HomeController @Inject()(computerService: ComputerService,
     */
   def list(page: Int, orderBy: Int, filter: String) = Action { implicit request =>
     val filterQuery = "%" + filter + "%"
-    Ok(html.list(
-      computerService.list(page = page, orderBy = orderBy, filter = filterQuery),
-      orderBy, filter
-    ))
+    val data = computerService.list(page = page, orderBy = orderBy, filter = filterQuery)
+    implicit val formats = DefaultFormats
+    val json = write(data)
+    Ok(json)
   }
 
   /**
