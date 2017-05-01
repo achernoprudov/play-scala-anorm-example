@@ -1,34 +1,17 @@
 [<img src="https://img.shields.io/travis/playframework/play-scala-anorm-example.svg"/>](https://travis-ci.org/playframework/play-scala-anorm-example)
 
-# play-scala-anorm-example
+# play-scala-rest-app
 
-This is an example Play application that uses Scala on the front end, and communicates with an in memory database using Anorm.
+##Build and run
 
-The Github location for this project is:
+To build application use command
 
-[https://github.com/typesafehub/activator-computer-database-scala](https://github.com/typesafehub/activator-computer-database-scala)
+    sbt dist
 
-## Play
+`dist` generates zip archive in directory `/target/universal`
 
-Play documentation is here:
+From this folder you must unzip archive and run it with command:
 
-[https://playframework.com/documentation/latest/Home](https://playframework.com/documentation/latest/Home)
+    ./scala-play-rest-app-0.0.1-SNAPSHOT/bin/scala-play-rest-app -Dplay.crypto.secret=abcdefghijk
 
-## Anorm
-
-Anorm is a Scala ORM library that uses SQL:
-
-[https://www.playframework.com/documentation/2.5.x/ScalaAnorm](https://www.playframework.com/documentation/2.5.x/ScalaAnorm)
-
-and
-
-[https://cchantep.github.io/anorm/](https://cchantep.github.io/anorm/)
-
-## Play Bootstrap
-
-The Play HTML templates use the Play Bootstrap library:
-
-[https://github.com/adrianhurt/play-bootstrap](https://github.com/adrianhurt/play-bootstrap)
-
-library to integrate Play with Bootstrap, the popular CSS Framework.
-
+`play.crypto.secret` provides secure for cryptographics functions
