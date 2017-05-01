@@ -49,5 +49,14 @@ class RestController @Inject()(computerService: ComputerService,
         Ok(json)
       }.getOrElse(NotFound)
   }
+
+  def similar(id: Long) = Action {
+    val items = computerService.similar(id)
+      .map { item => restAdapter.toSimpleComputer(item) }
+
+    implicit val formats = DefaultFormats
+    val json = write(items)
+    Ok(json)
+  }
 }
             
