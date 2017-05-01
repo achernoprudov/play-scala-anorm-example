@@ -18,10 +18,10 @@ class ModelSpec extends PlaySpec with OneAppPerSuite {
   "Computer model" should {
     
     "be retrieved by id" in {
-        val macintosh = computerService.findById(21).get
+        val macintosh = computerService.findFullById(21).get
       
-        macintosh.name must equal("Macintosh")
-        macintosh.introduced.value must matchPattern {
+        macintosh.computer.name must equal("Macintosh")
+        macintosh.computer.introduced.value must matchPattern {
           case date:java.util.Date if dateIs(date, "1984-01-24") =>
         }
     }
@@ -41,10 +41,10 @@ class ModelSpec extends PlaySpec with OneAppPerSuite {
           discontinued=None,
           companyId=Some(1)))
         
-        val macintosh = computerService.findById(21).get
+        val macintosh = computerService.findFullById(21).get
         
-        macintosh.name must equal("The Macintosh")
-        macintosh.introduced mustBe None
+        macintosh.computer.name must equal("The Macintosh")
+        macintosh.computer.introduced mustBe None
     }
     
   }

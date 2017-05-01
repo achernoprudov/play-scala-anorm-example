@@ -18,8 +18,8 @@ case class Computer(id: Option[Long] = None,
  * Helper for pagination.
  */
 case class Page[A](items: Seq[A], page: Int, offset: Long, total: Long) {
-  lazy val prev = Option(page - 1).filter(_ >= 0)
-  lazy val next = Option(page + 1).filter(_ => (offset + items.size) < total)
+  lazy val prev: Option[Int] = Option(page - 1).filter(_ >= 0)
+  lazy val next: Option[Int] = Option(page + 1).filter(_ => (offset + items.size) < total)
 }
 
 case class ComputerItem(computer: Computer, company: Option[Company], image: Option[Image] = None)
@@ -35,7 +35,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, i
   /**
    * Parse a Computer from a ResultSet
    */
-  val simple = {
+  val simple: RowParser[Computer] = {
       get[Option[Long]]("computer.id") ~
       get[String]("computer.name") ~
       get[Option[Date]]("computer.introduced") ~
@@ -50,27 +50,27 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, i
   /**
    * Parse a (Computer,Company) from a ResultSet
    */
-  val withCompany = simple ~ (companyService.simple ?) map {
+  val withCompany: RowParser[ComputerItem] = simple ~ (companyService.simple ?) map {
     case computer~company => ComputerItem(computer, company)
   }
 
   /**
     * Parse a (Computer,Company,Image) from a ResultSet
     */
-  val withCompanyAndImage = simple ~ (companyService.simple ?) ~ (imageService.simple ?) map {
+  val withCompanyAndImage: RowParser[ComputerItem] = simple ~ (companyService.simple ?) ~ (imageService.simple ?) map {
     case computer~company~image => ComputerItem(computer, company, image)
   }
 
   // -- Queries
 
-  /**
-   * Retrieve a computer from the id.
-   */
-  def findById(id: Long): Option[Computer] = {
-    db.withConnection { implicit connection =>
-      SQL("select * from computer where id = {id}").on('id -> id).as(simple.singleOpt)
-    }
-  }
+//  /**
+//   * Retrieve a computer from the id.
+//   */
+//  def findById(id: Long): Option[Computer] = {
+//    db.withConnection { implicit connection =>
+//      SQL("select * from computer where id = {id}").on('id -> id).as(simple.singleOpt)
+//    }
+//  }
 
   def findFullById(id: Long): Option[ComputerItem] = {
     db.withConnection { implicit connection =>

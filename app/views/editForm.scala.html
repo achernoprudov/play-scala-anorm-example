@@ -1,4 +1,4 @@
-@(id: Long, computerForm: Form[Computer], companies : Seq[(String, String)])(implicit messages: Messages)
+@(id: Long, computerForm: Form[Computer], imageUrl: String, companies : Seq[(String, String)])(implicit messages: Messages)
 
 @import b3.vertical.fieldConstructor
 
@@ -22,6 +22,8 @@
             )
         
         </fieldset>
+
+        <img src="@imageUrl" alt="No image" style="max-height: 200px">
         
         <div class="actions">
             <input type="submit" value="Save this computer" class="btn primary"> or 
