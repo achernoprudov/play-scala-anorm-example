@@ -1,39 +1,47 @@
-@(id: Long, computerForm: Form[Computer], imageUrl: String, companies : Seq[(String, String)])(implicit messages: Messages)
+@(id: Long, computerForm: Form[Computer], imageUrl: String, similar: Seq[Computer], companies : Seq[(String, String)])(implicit messages: Messages)
 
 @import b3.vertical.fieldConstructor
 
 @main {
-    
+
     <h1>Edit computer</h1>
-    
+
     @b3.form(routes.HomeController.update(id)) {
-        
+
+        <img src="@imageUrl" alt="No image" style="max-height: 200px">
+
         <fieldset>
-        
+
             @b3.text(computerForm("name"), '_label -> "Computer name", '_help -> "")
             @b3.date(computerForm("introduced"), '_label -> "Introduced date", '_help -> "")
             @b3.date(computerForm("discontinued"), '_label -> "Discontinued date", '_help -> "")
-            
+
             @b3.select(
-                computerForm("company"), 
-                companies, 
+                computerForm("company"),
+                companies,
                 '_label -> "Company", '_default -> "-- Choose a company --",
                 '_showConstraints -> false
             )
-        
+
         </fieldset>
 
-        <img src="@imageUrl" alt="No image" style="max-height: 200px">
-        
+        <p>
+           You must be looking for:
+            <br>
+            @similar.map { item =>
+                <a href="@routes.HomeController.edit(item.id.get)">@item.name</a>
+                <br>
+            }
+        </p>
+
         <div class="actions">
-            <input type="submit" value="Save this computer" class="btn primary"> or 
+            <input type="submit" value="Save this computer" class="btn primary"> or
             <a href="@routes.HomeController.list()" class="btn">Cancel</a>
         </div>
-        
+
     }
-    
+
     @b3.form(routes.HomeController.delete(id), 'class -> "topRight") {
         <input type="submit" value="Delete this computer" class="btn danger">
     }
-    
 }

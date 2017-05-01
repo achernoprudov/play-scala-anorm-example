@@ -67,8 +67,10 @@ class HomeController @Inject()(computerService: ComputerService,
     */
   def edit(id: Long) = Action {
     computerService.findFullById(id).map { item =>
-      val imgLink = item.image.map(_.link).getOrElse("https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRZqiIAtBVyfHgk5gnR-g91pdsHFBtieR72rLOsJJOgw2VONt-9-lbNXrr_ow")
-      Ok(html.editForm(id, computerForm.fill(item.computer), imgLink, companyService.options))
+      val imgLink = item.image.map(_.link).getOrElse("")
+      val companies = companyService.options
+      val similar = computerService.similar(item.computer.id.get)
+      Ok(html.editForm(id, computerForm.fill(item.computer), imgLink, similar, companies))
     }.getOrElse(NotFound)
   }
 
@@ -79,7 +81,7 @@ class HomeController @Inject()(computerService: ComputerService,
     */
   def update(id: Long) = Action { implicit request =>
     computerForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(html.editForm(id, formWithErrors, "", companyService.options)),
+      formWithErrors => BadRequest(html.editForm(id, formWithErrors, "", Seq.empty, companyService.options)),
       computer => {
         computerService.update(id, computer)
         Home.flashing("success" -> "Computer %s has been updated".format(computer.name))

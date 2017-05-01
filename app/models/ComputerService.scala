@@ -15,62 +15,63 @@ case class Computer(id: Option[Long] = None,
                     imageId: Option[Long] = None)
 
 /**
- * Helper for pagination.
- */
+  * Helper for pagination.
+  */
 case class Page[A](items: Seq[A], page: Int, offset: Long, total: Long) {
   lazy val prev: Option[Int] = Option(page - 1).filter(_ >= 0)
   lazy val next: Option[Int] = Option(page + 1).filter(_ => (offset + items.size) < total)
 }
 
 case class ComputerItem(computer: Computer, company: Option[Company], image: Option[Image] = None)
+
 case class ComputerSimpleItem(id: Option[Long], name: String, company: Option[Company])
 
 @javax.inject.Singleton
-class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, imageService: ImageService) {
+class ComputerService @Inject()(dbapi: DBApi, companyService: CompanyService, imageService: ImageService) {
 
   private val db = dbapi.database("default")
 
   // -- Parsers
 
   /**
-   * Parse a Computer from a ResultSet
-   */
+    * Parse a Computer from a ResultSet
+    */
   val simple: RowParser[Computer] = {
-      get[Option[Long]]("computer.id") ~
+    get[Option[Long]]("computer.id") ~
       get[String]("computer.name") ~
       get[Option[Date]]("computer.introduced") ~
       get[Option[Date]]("computer.discontinued") ~
       get[Option[Long]]("computer.company_id") ~
       get[Option[Long]]("computer.image_id") map {
-      case id~name~introduced~discontinued~companyId~imageId =>
+      case id ~ name ~ introduced ~ discontinued ~ companyId ~ imageId =>
         Computer(id, name, introduced, discontinued, companyId, imageId)
     }
   }
 
   /**
-   * Parse a (Computer,Company) from a ResultSet
-   */
+    * Parse a (Computer,Company) from a ResultSet
+    */
   val withCompany: RowParser[ComputerItem] = simple ~ (companyService.simple ?) map {
-    case computer~company => ComputerItem(computer, company)
+    case computer ~ company => ComputerItem(computer, company)
   }
 
   /**
     * Parse a (Computer,Company,Image) from a ResultSet
     */
   val withCompanyAndImage: RowParser[ComputerItem] = simple ~ (companyService.simple ?) ~ (imageService.simple ?) map {
-    case computer~company~image => ComputerItem(computer, company, image)
+    case computer ~ company ~ image => ComputerItem(computer, company, image)
   }
 
   // -- Queries
 
-//  /**
-//   * Retrieve a computer from the id.
-//   */
-//  def findById(id: Long): Option[Computer] = {
-//    db.withConnection { implicit connection =>
-//      SQL("select * from computer where id = {id}").on('id -> id).as(simple.singleOpt)
-//    }
-//  }
+  //  /**
+  //   * Retrieve a computer from the id.
+  //   */
+  //  def findById(id: Long): Option[Computer] = {
+  //    db.withConnection { implicit connection =>
+  //      SQL("select * from computer where id = {id}").on('id -> id).as(simple.singleOpt)
+  //    }
+  //  }
 
   def findFullById(id: Long): Option[ComputerItem] = {
     db.withConnection { implicit connection =>
@@ -86,13 +87,13 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, i
   }
 
   /**
-   * Return a page of (Computer,Company).
-   *
-   * @param page Page to display
-   * @param pageSize Number of computers per page
-   * @param orderBy Computer property used for sorting
-   * @param filter Filter applied on the name column
-   */
+    * Return a page of (Computer,Company).
+    *
+    * @param page     Page to display
+    * @param pageSize Number of computers per page
+    * @param orderBy  Computer property used for sorting
+    * @param filter   Filter applied on the name column
+    */
   def list(page: Int = 0, pageSize: Int = 10, orderBy: Int = 1, filter: String = "%"): Page[ComputerItem] = {
     val offset = pageSize * page
     db.withConnection { implicit connection =>
@@ -126,11 +127,31 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, i
   }
 
   /**
-   * Update a computer.
-   *
-   * @param id The computer id
-   * @param computer The computer values.
-   */
+    * Find similar items for item with id
+    *
+    * @param id the computer id
+    * @return number of similar items
+    */
+  def similar(id: Long): Seq[Computer] = {
+    db.withConnection { implicit connection =>
+      SQL(
+        """
+        select * from computer
+        where id > {id}
+        limit 5
+      """
+      ).on(
+        'id -> id
+      ).as(simple *)
+    }
+  }
+
+  /**
+    * Update a computer.
+    *
+    * @param id       The computer id
+    * @param computer The computer values.
+    */
   def update(id: Long, computer: Computer): Int = {
     db.withConnection { implicit connection =>
       SQL(
@@ -150,10 +171,10 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, i
   }
 
   /**
-   * Insert a new computer.
-   *
-   * @param computer The computer values.
-   */
+    * Insert a new computer.
+    *
+    * @param computer The computer values.
+    */
   def insert(computer: Computer): Int = {
     db.withConnection { implicit connection =>
       SQL(
@@ -173,10 +194,10 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, i
   }
 
   /**
-   * Delete a computer.
-   *
-   * @param id Id of the computer to delete.
-   */
+    * Delete a computer.
+    *
+    * @param id Id of the computer to delete.
+    */
   def delete(id: Long): Int = {
     db.withConnection { implicit connection =>
       SQL("delete from computer where id = {id}").on('id -> id).executeUpdate()
