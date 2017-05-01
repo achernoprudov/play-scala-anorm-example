@@ -17,7 +17,7 @@ class CompanyService @Inject() (dbapi: DBApi) {
   /**
    * Parse a Company from a ResultSet
    */
-  val simple = {
+  val simple: RowParser[Company] = {
     get[Option[Long]]("company.id") ~
       get[String]("company.name") map {
       case id~name => Company(id, name)
@@ -28,12 +28,11 @@ class CompanyService @Inject() (dbapi: DBApi) {
    * Construct the Map[String,String] needed to fill a select options set.
    */
   def options: Seq[(String,String)] = db.withConnection { implicit connection =>
-    SQL("select * from company order by name").as(simple *).
+    SQL("select * from company order by name").as(simple.*).
       foldLeft[Seq[(String, String)]](Nil) { (cs, c) =>
       c.id.fold(cs) { id => cs :+ (id.toString -> c.name) }
     }
   }
-
 }
 
 

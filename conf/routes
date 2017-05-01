@@ -24,4 +24,5 @@ GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 # REST API
 
-GET     /rest/computers                  controllers.RestController.list(p:Int ?= 0, s:Int ?= 2, f ?= "")
+GET     /rest/computers             controllers.RestController.list(p:Int ?= 0, s:Int ?= 2, f ?= "")
+GET     /rest/computers/:id         controllers.RestController.get(id:Long)

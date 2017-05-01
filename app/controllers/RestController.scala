@@ -3,11 +3,8 @@ package controllers
 import javax.inject.Inject
 
 import models._
-import play.api.data.Forms._
-import play.api.data._
 import play.api.i18n._
 import play.api.mvc._
-import views._
 
 import net.liftweb.json._
 import net.liftweb.json.Serialization.write
@@ -18,35 +15,9 @@ import net.liftweb.json.Serialization.write
   */
 class RestController @Inject()(computerService: ComputerService,
                                companyService: CompanyService,
+                               restAdapter: RestAdapter,
                                val messagesApi: MessagesApi)
   extends Controller with I18nSupport {
-
-  /**
-    * This result directly redirect to the application home.
-    */
-  val Home = Redirect(routes.HomeController.list(0, 2, ""))
-
-  /**
-    * Describe the computer form (used in both edit and create screens).
-    */
-  val computerForm = Form(
-    mapping(
-      "id" -> ignored(None: Option[Long]),
-      "name" -> nonEmptyText,
-      "introduced" -> optional(date("yyyy-MM-dd")),
-      "discontinued" -> optional(date("yyyy-MM-dd")),
-      "company" -> optional(longNumber)
-    )(Computer.apply)(Computer.unapply)
-  )
-
-  // -- Actions
-
-  /**
-    * Handle default path requests, redirect to computers list
-    */
-  def index = Action {
-    Home
-  }
 
   /**
     * Display the paginated list of computers.
@@ -57,9 +28,10 @@ class RestController @Inject()(computerService: ComputerService,
     */
   def list(page: Int, orderBy: Int, filter: String) = Action { implicit request =>
     val filterQuery = "%" + filter + "%"
-    val data = computerService.list(page = page, orderBy = orderBy, filter = filterQuery)
+    val dbPage = computerService.list(page = page, orderBy = orderBy, filter = filterQuery)
+    val restPage = restAdapter.map(dbPage)
     implicit val formats = DefaultFormats
-    val json = write(data)
+    val json = write(restPage)
     Ok(json)
   }
 
@@ -68,53 +40,14 @@ class RestController @Inject()(computerService: ComputerService,
     *
     * @param id Id of the computer to edit
     */
-  def edit(id: Long) = Action {
-    computerService.findById(id).map { computer =>
-      Ok(html.editForm(id, computerForm.fill(computer), companyService.options))
-    }.getOrElse(NotFound)
-  }
-
-  /**
-    * Handle the 'edit form' submission
-    *
-    * @param id Id of the computer to edit
-    */
-  def update(id: Long) = Action { implicit request =>
-    computerForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(html.editForm(id, formWithErrors, companyService.options)),
-      computer => {
-        computerService.update(id, computer)
-        Home.flashing("success" -> "Computer %s has been updated".format(computer.name))
-      }
-    )
-  }
-
-  /**
-    * Display the 'new computer form'.
-    */
-  def create = Action {
-    Ok(html.createForm(computerForm, companyService.options))
-  }
-
-  /**
-    * Handle the 'new computer form' submission.
-    */
-  def save = Action { implicit request =>
-    computerForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(html.createForm(formWithErrors, companyService.options)),
-      computer => {
-        computerService.insert(computer)
-        Home.flashing("success" -> "Computer %s has been created".format(computer.name))
-      }
-    )
-  }
-
-  /**
-    * Handle computer deletion.
-    */
-  def delete(id: Long) = Action {
-    computerService.delete(id)
-    Home.flashing("success" -> "Computer has been deleted")
+  def get(id: Long) = Action {
+    computerService.findFullById(id)
+      .map { item => restAdapter.map(item) }
+      .map { computer =>
+        implicit val formats = DefaultFormats
+        val json = write(computer)
+        Ok(json)
+      }.getOrElse(NotFound)
   }
 }
             

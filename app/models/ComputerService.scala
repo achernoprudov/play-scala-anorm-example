@@ -11,7 +11,8 @@ case class Computer(id: Option[Long] = None,
                     name: String,
                     introduced: Option[Date],
                     discontinued: Option[Date],
-                    companyId: Option[Long])
+                    companyId: Option[Long],
+                    imageId: Option[Long] = None)
 
 /**
  * Helper for pagination.
@@ -21,10 +22,11 @@ case class Page[A](items: Seq[A], page: Int, offset: Long, total: Long) {
   lazy val next = Option(page + 1).filter(_ => (offset + items.size) < total)
 }
 
-case class ListItem(computer: Computer, company: Option[Company])
+case class ComputerItem(computer: Computer, company: Option[Company], image: Option[Image] = None)
+case class ComputerSimpleItem(id: Option[Long], name: String, company: Option[Company])
 
 @javax.inject.Singleton
-class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
+class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService, imageService: ImageService) {
 
   private val db = dbapi.database("default")
 
@@ -34,13 +36,14 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    * Parse a Computer from a ResultSet
    */
   val simple = {
-    get[Option[Long]]("computer.id") ~
+      get[Option[Long]]("computer.id") ~
       get[String]("computer.name") ~
       get[Option[Date]]("computer.introduced") ~
       get[Option[Date]]("computer.discontinued") ~
-      get[Option[Long]]("computer.company_id") map {
-      case id~name~introduced~discontinued~companyId =>
-        Computer(id, name, introduced, discontinued, companyId)
+      get[Option[Long]]("computer.company_id") ~
+      get[Option[Long]]("computer.image_id") map {
+      case id~name~introduced~discontinued~companyId~imageId =>
+        Computer(id, name, introduced, discontinued, companyId, imageId)
     }
   }
 
@@ -48,7 +51,14 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    * Parse a (Computer,Company) from a ResultSet
    */
   val withCompany = simple ~ (companyService.simple ?) map {
-    case computer~company => ListItem(computer, company)
+    case computer~company => ComputerItem(computer, company)
+  }
+
+  /**
+    * Parse a (Computer,Company,Image) from a ResultSet
+    */
+  val withCompanyAndImage = simple ~ (companyService.simple ?) ~ (imageService.simple ?) map {
+    case computer~company~image => ComputerItem(computer, company, image)
   }
 
   // -- Queries
@@ -62,6 +72,19 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
     }
   }
 
+  def findFullById(id: Long): Option[ComputerItem] = {
+    db.withConnection { implicit connection =>
+      SQL(
+        """
+          select * from computer
+          left join company on computer.company_id = company.id
+          left join image on computer.image_id = image.id
+          where computer.id = {id}
+        """
+      ).on('id -> id).as(withCompanyAndImage.singleOpt)
+    }
+  }
+
   /**
    * Return a page of (Computer,Company).
    *
@@ -70,12 +93,9 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    * @param orderBy Computer property used for sorting
    * @param filter Filter applied on the name column
    */
-  def list(page: Int = 0, pageSize: Int = 10, orderBy: Int = 1, filter: String = "%"): Page[ListItem] = {
-
-    val offest = pageSize * page
-
+  def list(page: Int = 0, pageSize: Int = 10, orderBy: Int = 1, filter: String = "%"): Page[ComputerItem] = {
+    val offset = pageSize * page
     db.withConnection { implicit connection =>
-
       val computers = SQL(
         """
           select * from computer
@@ -86,7 +106,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
         """
       ).on(
         'pageSize -> pageSize,
-        'offset -> offest,
+        'offset -> offset,
         'filter -> filter,
         'orderBy -> orderBy
       ).as(withCompany *)
@@ -101,7 +121,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
         'filter -> filter
       ).as(scalar[Long].single)
 
-      Page(computers, page, offest, totalRows)
+      Page(computers, page, offset, totalRows)
     }
   }
 
@@ -111,7 +131,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    * @param id The computer id
    * @param computer The computer values.
    */
-  def update(id: Long, computer: Computer) = {
+  def update(id: Long, computer: Computer): Int = {
     db.withConnection { implicit connection =>
       SQL(
         """
@@ -134,7 +154,7 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    *
    * @param computer The computer values.
    */
-  def insert(computer: Computer) = {
+  def insert(computer: Computer): Int = {
     db.withConnection { implicit connection =>
       SQL(
         """
@@ -157,10 +177,9 @@ class ComputerService @Inject() (dbapi: DBApi, companyService: CompanyService) {
    *
    * @param id Id of the computer to delete.
    */
-  def delete(id: Long) = {
+  def delete(id: Long): Int = {
     db.withConnection { implicit connection =>
       SQL("delete from computer where id = {id}").on('id -> id).executeUpdate()
     }
   }
-
 }
