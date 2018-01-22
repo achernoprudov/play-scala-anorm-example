@@ -1,8 +1,21 @@
 package models
 
+import java.util.Date
 import javax.inject.Singleton
 
-case class ComputerResult(id: Option[Long], name: String, imageUrl: Option[String], company: Option[Company], description: Option[String])
+case class ComputerResult(id: Option[Long],
+                          name: String,
+                          imageUrl: Option[String],
+                          company: Option[Company],
+                          description: Option[String])
+
+case class ComputerResultFull(id: Option[Long],
+                              name: String,
+                              introduced: Option[Date],
+                              discounted: Option[Date],
+                              imageUrl: Option[String],
+                              company: Option[Company],
+                              description: Option[String])
 
 /**
   * Adapter transforms data to Rest API Structures {@link models.RestAdapter.ComputerResult}
@@ -11,15 +24,20 @@ case class ComputerResult(id: Option[Long], name: String, imageUrl: Option[Strin
 @Singleton
 class RestAdapter {
 
-
   val loremIpsum: String = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore" +
     " et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea" +
     " commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " +
     "pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
-  def map(item: ComputerItem): ComputerResult = {
+  def map(item: ComputerItem): ComputerResultFull = {
     val url = item.image.map(_.link)
-    ComputerResult(item.computer.id, item.computer.name, url, item.company, Option(loremIpsum))
+    ComputerResultFull(
+      item.computer.id,
+      item.computer.name,
+      item.computer.introduced,
+      item.computer.discontinued,
+      url, item.company,
+      Option(loremIpsum))
   }
 
   def map(dbPage: Page[ComputerItem]): Page[ComputerResult] = {
