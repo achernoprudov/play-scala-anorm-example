@@ -1,6 +1,13 @@
 [<img src="https://img.shields.io/travis/playframework/play-scala-anorm-example.svg"/>](https://travis-ci.org/playframework/play-scala-anorm-example)
 
-# play-scala-rest-app
+# Play Framework Scala Application
+
+Application shows basic Play Web Application with simple UI and REST API. 
+
+# REST API
+
+ 
+
 
 ##Build and run
 
